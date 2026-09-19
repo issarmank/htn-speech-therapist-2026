@@ -41,7 +41,7 @@
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --lan",
     "android:emulator": "expo start --android --localhost",
-    "android:tunnel": "expo start --android --tunnel",
+    "android:tunnel": "expo start --tunnel",
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint"
