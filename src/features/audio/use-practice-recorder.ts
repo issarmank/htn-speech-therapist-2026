@@ -16,6 +16,8 @@ export function usePracticeRecorder() {
   const recorderState = useAudioRecorderState(recorder);
   const [status, setStatus] = useState<PracticeRecorderStatus>('idle');
   const stoppingRef = useRef(false);
+  const startedAtRef = useRef<number | null>(null);
+  const stopRef = useRef<() => Promise<AudioClip | null>>(() => Promise.resolve(null));
 
   const requestPermission = async () => {
     const permission = await requestRecordingPermissionsAsync();
@@ -28,6 +30,7 @@ export function usePracticeRecorder() {
       if (!(await requestPermission())) return false;
       await recorder.prepareToRecordAsync();
       recorder.record();
+      startedAtRef.current = Date.now();
       setStatus('recording');
       return true;
     } catch {
@@ -40,7 +43,10 @@ export function usePracticeRecorder() {
     if (stoppingRef.current || !recorder.isRecording) return null;
     stoppingRef.current = true;
     setStatus('stopping');
-    const durationMillis = recorder.currentTime * 1000;
+    // `currentTime` is reported in different units by expo-audio's web and
+    // native implementations. Measure this user interaction ourselves so a
+    // complete spoken phrase is never rejected because of a stale recorder clock.
+    const durationMillis = startedAtRef.current ? Date.now() - startedAtRef.current : 0;
     try {
       await recorder.stop();
       const uri = recorder.uri;
@@ -54,15 +60,18 @@ export function usePracticeRecorder() {
       setStatus('recording_failed');
       return null;
     } finally {
+      startedAtRef.current = null;
       stoppingRef.current = false;
     }
   };
 
+  stopRef.current = stop;
+
   useEffect(() => {
-    if (status === 'recording' && recorderState.durationMillis >= MAX_RECORDING_MILLIS) {
-      void stop();
-    }
-  }, [recorderState.durationMillis, status]);
+    if (status !== 'recording') return;
+    const timeout = setTimeout(() => { void stopRef.current(); }, MAX_RECORDING_MILLIS);
+    return () => clearTimeout(timeout);
+  }, [status]);
 
   return {
     requestPermission,

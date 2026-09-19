@@ -2,13 +2,12 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 
 export default function ClearSpeakIntro() {
-  const sessionId = `r-${Date.now()}`;
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.page}>
     <Text style={styles.eyebrow}>CLEARSPEAK · R SOUND</Text><Text style={styles.title}>A clearer start{`\n`}to “rapidly.”</Text>
     <Text style={styles.subtitle}>You’ll say one phrase at a comfortable pace. VocalFlow will surface one word and one cue—no score maze, no diagnosis.</Text>
     <View style={styles.steps}><Text style={styles.step}>1   Say the phrase</Text><Text style={styles.step}>2   Notice one word</Text><Text style={styles.step}>3   Try it once more</Text></View>
     <View style={styles.prompt}><Text style={styles.promptLabel}>TODAY’S PHRASE</Text><Text selectable style={styles.promptText}>Red robin runs rapidly.</Text></View>
-    <Pressable accessibilityRole="button" accessibilityLabel="Begin ClearSpeak warm-up" onPress={() => router.replace(`/practice/${sessionId}`)} style={styles.cta}><Text style={styles.ctaText}>Begin warm-up  →</Text></Pressable>
+    <Pressable accessibilityRole="button" accessibilityLabel="Begin ClearSpeak warm-up" onPress={() => router.replace(`/practice/r-${Date.now()}`)} style={styles.cta}><Text style={styles.ctaText}>Begin warm-up  →</Text></Pressable>
   </ScrollView>;
 }
 

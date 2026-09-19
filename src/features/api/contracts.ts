@@ -12,7 +12,7 @@ export type WordFeedback = {
   status: 'nailed_it' | 'retry' | 'unavailable';
   accuracy?: number;
   error_type?: string;
-  phonemes?: Array<{ symbol: string; accuracy?: number }>;
+  phonemes?: { symbol: string; accuracy?: number }[];
 };
 
 export type DrillAttemptResult = {

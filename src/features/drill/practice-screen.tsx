@@ -28,6 +28,7 @@ export function PracticeScreen({ sessionId }: { sessionId: string }) {
   const [result, setResult] = useState<DrillAttemptResult | undefined>();
   const [error, setError] = useState<string>();
   const [selectedWord, setSelectedWord] = useState<WordFeedback>();
+  const [dismissedRestore, setDismissedRestore] = useState(false);
   const player = useAudioPlayer(null);
 
   useEffect(() => {
@@ -36,13 +37,11 @@ export function PracticeScreen({ sessionId }: { sessionId: string }) {
       setSession(next);
       void saveSession(next);
     }
-    if (!restoring && session?.drillResult) {
-      setResult(session.drillResult);
-      setStage('feedback');
-    }
   }, [restoring, session, sessionId, setSession]);
 
-  const feedbackByIndex = useMemo(() => new Map(result?.word_feedback.map((item) => [item.word_index, item])), [result]);
+  const activeResult = result ?? (dismissedRestore ? undefined : session?.drillResult);
+  const displayStage = activeResult && stage === 'prompting' ? 'feedback' : stage;
+  const feedbackByIndex = useMemo(() => new Map(activeResult?.word_feedback.map((item) => [item.word_index, item])), [activeResult]);
   const recordingHint = recorder.secondsRemaining <= 2 ? `Wrapping up in ${recorder.secondsRemaining}s` : recorder.secondsRemaining <= 20 ? `${recorder.secondsRemaining}s remaining` : '';
 
   const begin = async () => {
@@ -56,6 +55,7 @@ export function PracticeScreen({ sessionId }: { sessionId: string }) {
     try {
       const assessment = await assessmentClient.assessDrill({ clipUri: clip.uri, sessionId, promptId: session?.promptId ?? 'red-robin-runs-rapidly', idempotencyKey: id() });
       setResult(assessment);
+      setDismissedRestore(false);
       const next = { ...(session ?? createSession(sessionId, 'clear_speak')), attemptIds: [...(session?.attemptIds ?? []), assessment.attempt_id], drillResult: assessment };
       setSession(next);
       await saveSession(next);
@@ -65,10 +65,10 @@ export function PracticeScreen({ sessionId }: { sessionId: string }) {
       setStage('failed');
     }
   };
-  const retry = () => { setResult(undefined); setError(undefined); setStage('prompting'); };
+  const retry = () => { setDismissedRestore(true); setResult(undefined); setError(undefined); setStage('prompting'); };
   const complete = async () => {
-    if (!result) return;
-    const next = { ...(session ?? createSession(sessionId, 'clear_speak')), completed: true, drillResult: result };
+    if (!activeResult) return;
+    const next = { ...(session ?? createSession(sessionId, 'clear_speak')), completed: true, drillResult: activeResult };
     setSession(next);
     await saveSession(next);
     router.push(`/reveal/${sessionId}`);
@@ -81,26 +81,26 @@ export function PracticeScreen({ sessionId }: { sessionId: string }) {
     <Text style={styles.title}>Make your R sound land clearly.</Text>
     <Text style={styles.progress}>Attempt {(session?.attemptIds.length ?? 0) + 1} of 3</Text>
     <View style={styles.mirror}>
-      <Text style={styles.mirrorLabel}>SPEECH MIRROR · {stage === 'recording' ? 'LISTENING' : 'READY'}</Text>
+      <Text style={styles.mirrorLabel}>SPEECH MIRROR · {displayStage === 'recording' ? 'LISTENING' : 'READY'}</Text>
       <View style={styles.phraseRow}>{words.map((word, index) => {
         const feedback = feedbackByIndex.get(index);
         return <Pressable key={word} accessibilityRole={feedback ? 'button' : undefined} accessibilityLabel={feedback ? `${word}, ${feedback.status === 'nailed_it' ? 'nailed it' : feedback.status === 'retry' ? 'try again' : 'not enough audio to score'}` : word} onPress={feedback ? () => setSelectedWord(feedback) : undefined}><Text style={[styles.phrase, wordStyle(feedback)]}>{word}{index < words.length - 1 ? ' ' : '.'}</Text></Pressable>;
       })}</View>
-      <View style={styles.wave}>{[18, 32, 50, 28, 58, 36, 48, 23, 38].map((height, index) => <View key={index} style={[styles.bar, { height: stage === 'recording' ? height : 10 + (index % 3) * 6 }]} />)}</View>
-      {stage === 'recording' && <Text style={styles.lightText}>{recordingHint}</Text>}
+      <View style={styles.wave}>{[18, 32, 50, 28, 58, 36, 48, 23, 38].map((height, index) => <View key={index} style={[styles.bar, { height: displayStage === 'recording' ? height : 10 + (index % 3) * 6 }]} />)}</View>
+      {displayStage === 'recording' && <Text style={styles.lightText}>{recordingHint}</Text>}
     </View>
-    {stage === 'analysing' && <Text style={styles.status}>Finding your clearest sound…</Text>}
+    {displayStage === 'analysing' && <Text style={styles.status}>Finding your clearest sound…</Text>}
     {recorder.status === 'permission_denied' && <Text selectable style={styles.error}>VocalFlow needs microphone access to listen. Enable it in Settings, then try again.</Text>}
     {recorder.status === 'too_short' && <Text selectable style={styles.error}>We didn’t catch enough speech. Try a full phrase.</Text>}
     {recorder.status === 'recording_failed' && <Text selectable style={styles.error}>Recording stopped unexpectedly. Your prompt is still here—try again.</Text>}
     {error && <Text selectable style={styles.error}>{error}</Text>}
-    {result && <CoachCard result={result} onReplay={() => { if (result.coach.audio_stream_url) { player.replace(result.coach.audio_stream_url); player.play(); } }} />}
-    {selectedWord && <View style={styles.detailSheet}><Text style={styles.detailTitle}>{selectedWord.word}</Text><Text selectable style={styles.detailText}>{selectedWord.status === 'unavailable' ? 'Not enough audio to score this word yet.' : selectedWord.status === 'nailed_it' ? 'Nailed it. Keep the same relaxed start.' : result?.focus?.reason ?? 'Try a rounder, smoother start.'}</Text>{selectedWord.accuracy !== undefined && <Text style={styles.detailScore}>Practice feedback {selectedWord.accuracy}</Text>}<Pressable accessibilityRole="button" accessibilityLabel="Close word detail" onPress={() => setSelectedWord(undefined)}><Text style={styles.secondaryText}>Close</Text></Pressable></View>}
-    <Pressable accessibilityRole="button" accessibilityLabel={stage === 'recording' ? 'Stop and score your phrase' : 'Start recording your phrase'} accessibilityState={{ disabled: stage === 'analysing' }} disabled={stage === 'analysing'} onPress={stage === 'recording' ? submit : begin} style={[styles.record, stage === 'analysing' && styles.disabled]}>
-      <Text style={styles.recordText}>{stage === 'recording' ? '■  Stop and score' : stage === 'analysing' ? '···  Analysing' : '◉  Hold to speak'}</Text>
+    {activeResult && <CoachCard result={activeResult} onReplay={() => { if (activeResult.coach.audio_stream_url) { player.replace(activeResult.coach.audio_stream_url); player.play(); } }} />}
+    {selectedWord && <View style={styles.detailSheet}><Text style={styles.detailTitle}>{selectedWord.word}</Text><Text selectable style={styles.detailText}>{selectedWord.status === 'unavailable' ? 'Not enough audio to score this word yet.' : selectedWord.status === 'nailed_it' ? 'Nailed it. Keep the same relaxed start.' : activeResult?.focus?.reason ?? 'Try a rounder, smoother start.'}</Text>{selectedWord.accuracy !== undefined && <Text style={styles.detailScore}>Practice feedback {selectedWord.accuracy}</Text>}<Pressable accessibilityRole="button" accessibilityLabel="Close word detail" onPress={() => setSelectedWord(undefined)}><Text style={styles.secondaryText}>Close</Text></Pressable></View>}
+    <Pressable accessibilityRole="button" accessibilityLabel={displayStage === 'recording' ? 'Stop and score your phrase' : 'Start recording your phrase'} accessibilityState={{ disabled: displayStage === 'analysing' }} disabled={displayStage === 'analysing'} onPress={displayStage === 'recording' ? submit : begin} style={[styles.record, displayStage === 'analysing' && styles.disabled]}>
+      <Text style={styles.recordText}>{displayStage === 'recording' ? '■  Stop and score' : displayStage === 'analysing' ? '···  Analysing' : '◉  Hold to speak'}</Text>
     </Pressable>
-    {(stage === 'failed' || recorder.status === 'too_short' || recorder.status === 'recording_failed') && <Pressable accessibilityRole="button" accessibilityLabel="Try this phrase again" onPress={retry} style={styles.secondary}><Text style={styles.secondaryText}>Try again</Text></Pressable>}
-    {stage === 'feedback' && <Pressable accessibilityRole="button" accessibilityLabel={result?.clear_speak?.overall && result.clear_speak.overall >= 80 ? 'See your improvement' : 'Try the phrase again'} onPress={result?.clear_speak?.overall && result.clear_speak.overall >= 80 ? complete : retry} style={styles.cta}><Text style={styles.ctaText}>{result?.clear_speak?.overall && result.clear_speak.overall >= 80 ? 'See your improvement  →' : 'Try rapidly again  →'}</Text></Pressable>}
+    {(displayStage === 'failed' || recorder.status === 'too_short' || recorder.status === 'recording_failed') && <Pressable accessibilityRole="button" accessibilityLabel="Try this phrase again" onPress={retry} style={styles.secondary}><Text style={styles.secondaryText}>Try again</Text></Pressable>}
+    {displayStage === 'feedback' && <Pressable accessibilityRole="button" accessibilityLabel={activeResult?.clear_speak?.overall && activeResult.clear_speak.overall >= 80 ? 'See your improvement' : 'Try the phrase again'} onPress={activeResult?.clear_speak?.overall && activeResult.clear_speak.overall >= 80 ? complete : retry} style={styles.cta}><Text style={styles.ctaText}>{activeResult?.clear_speak?.overall && activeResult.clear_speak.overall >= 80 ? 'See your improvement  →' : 'Try rapidly again  →'}</Text></Pressable>}
   </ScrollView>;
 }
 
