@@ -8,6 +8,8 @@ export type SavedSession = {
   sessionId: string;
   mission: 'clear_speak' | 'scenario_sprint';
   promptId: string;
+  stress?: 'calm' | 'busy';
+  intent?: FlowAttemptResult['next_intent'];
   attemptIds: string[];
   drillResult?: DrillAttemptResult;
   flowResult?: FlowAttemptResult;

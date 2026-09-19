@@ -27,6 +27,7 @@ export function ScenarioScreen({ sessionId }: { sessionId: string }) {
     }
     if (!restoring && session?.flowResult) {
       setResult(session.flowResult);
+      setBusy(session.stress === 'busy');
       setStage('feedback');
     }
   }, [restoring, session, sessionId, setSession]);
@@ -39,7 +40,7 @@ export function ScenarioScreen({ sessionId }: { sessionId: string }) {
     try {
       const assessment = await assessmentClient.assessFlow({ clipUri: clip.uri, sessionId, promptId: session?.promptId ?? 'coffee-shop-order', idempotencyKey: id() }, busy);
       setResult(assessment);
-      const next = { ...(session ?? createSession(sessionId, 'scenario_sprint')), attemptIds: [...(session?.attemptIds ?? []), assessment.attempt_id], flowResult: assessment };
+      const next = { ...(session ?? createSession(sessionId, 'scenario_sprint')), attemptIds: [...(session?.attemptIds ?? []), assessment.attempt_id], flowResult: assessment, stress: busy ? 'busy' as const : 'calm' as const, intent: assessment.next_intent };
       setSession(next);
       await saveSession(next);
       setStage('feedback');

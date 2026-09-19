@@ -13,7 +13,7 @@ export default function RevealRoute() {
     <Text style={styles.scoreLabel}>BEST PRACTICE FEEDBACK</Text><Text style={styles.score}>{score ?? '—'}</Text><Text style={styles.scoreNote}>You gave “rapidly” a clearer, smoother start.</Text>
     <Text style={styles.body}>A Before → After comparison appears only when the backend provides a valid comparable pair. For now, this is a clean best-attempt celebration.</Text>
     <Pressable accessibilityRole="button" accessibilityLabel="Take on Coffee Shop scenario" onPress={() => router.replace(`/scenario/coffee-shop/${sessionId ?? Date.now()}`)} style={styles.cta}><Text style={styles.ctaText}>Take on Coffee Shop  →</Text></Pressable>
-    <Pressable accessibilityRole="button" accessibilityLabel="Return home" onPress={() => router.popToTop()} style={styles.secondary}><Text style={styles.secondaryText}>Back to home</Text></Pressable>
+    <Pressable accessibilityRole="button" accessibilityLabel="Return home" onPress={() => router.dismissAll()} style={styles.secondary}><Text style={styles.secondaryText}>Back to home</Text></Pressable>
   </ScrollView>;
 }
 
