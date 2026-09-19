@@ -22,7 +22,7 @@ VocalCraft is intended to support at-home practice between sessions with a speec
 
 1. Maya selects **“Order a coffee with confidence”** and starts with a short `/r/` warm-up.
 2. She says: “Red robin runs rapidly.”
-3. The screen becomes a live Speech Mirror: `rapidly` glows amber, the `/r/` marker reads **61**, and the coach says, “Strong start—round your tongue slightly more on *rapidly*.”
+3. The screen becomes a live Speech Mirror: `rapidly` glows amber, the `/r/` marker reads **61**, and the coach says, “Strong start—round your tongue slightly more on _rapidly_.”
 4. Maya retries. The word shifts to blue/green and the score rises to **84**.
 5. She enters a coffee-shop roleplay with a **Calm → Busy** stress dial and completes an order.
 6. A shareable **Before → After** card shows the improvement in clarity and conversational flow.
@@ -71,13 +71,13 @@ The active practice screen has one job: make a coaching loop feel magical and un
 
 ClearSpeak is a scripted exercise, starting with `/r/` phrases because it makes phoneme-level feedback visually compelling.
 
-| Element | MVP behaviour |
-| --- | --- |
-| Prompt set | `red`, `rain`, `road`, then “Red robin runs rapidly.” |
+| Element    | MVP behaviour                                                                                           |
+| ---------- | ------------------------------------------------------------------------------------------------------- |
+| Prompt set | `red`, `rain`, `road`, then “Red robin runs rapidly.”                                                   |
 | Assessment | Audio plus the expected phrase is sent to Azure Speech Pronunciation Assessment at phoneme granularity. |
-| Feedback | Show word/phoneme accuracy, fluency, completeness, and prosody where returned. |
-| Correction | Select the lowest meaningful target-word signal; coach demonstrates a retry cue. |
-| Completion | Three scored tries per phrase or user skips; final card shows best attempt. |
+| Feedback   | Show word/phoneme accuracy, fluency, completeness, and prosody where returned.                          |
+| Correction | Select the lowest meaningful target-word signal; coach demonstrates a retry cue.                        |
+| Completion | Three scored tries per phrase or user skips; final card shows best attempt.                             |
 
 The UI must label results **practice feedback**, not diagnosis or clinical accuracy.
 
@@ -220,7 +220,12 @@ Response:
     "prosody": 77
   },
   "word_feedback": [
-    { "word": "rapidly", "status": "retry", "accuracy": 61, "phonemes": [{ "symbol": "r", "accuracy": 61 }] }
+    {
+      "word": "rapidly",
+      "status": "retry",
+      "accuracy": 61,
+      "phonemes": [{ "symbol": "r", "accuracy": 61 }]
+    }
   ],
   "coach": {
     "encouragement": "Your pacing was much steadier.",
@@ -250,27 +255,27 @@ The response includes transcript, WPM, filler count, long-pause count, optional 
 
 ## 7. Data to retain for the MVP
 
-| Entity | Important fields |
-| --- | --- |
-| `sessions` | user, mission, mode, scenario, stress level, started/completed times |
-| `attempts` | session, prompt/reference text, transcript, sequence, audio key if enabled |
-| `assessment_results` | Azure aggregate scores, raw assessment JSON, active speech seconds, WPM, filler/long-pause counts, pitch summary |
-| `word_feedback` | attempt, word, status, accuracy, error type, phoneme details |
-| `coach_turns` | attempt, encouragement, cue, next prompt, TTS audio key/status |
-| `achievement_snapshots` | first/best comparable attempt, metric delta, display copy |
+| Entity                  | Important fields                                                                                                 |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `sessions`              | user, mission, mode, scenario, stress level, started/completed times                                             |
+| `attempts`              | session, prompt/reference text, transcript, sequence, audio key if enabled                                       |
+| `assessment_results`    | Azure aggregate scores, raw assessment JSON, active speech seconds, WPM, filler/long-pause counts, pitch summary |
+| `word_feedback`         | attempt, word, status, accuracy, error type, phoneme details                                                     |
+| `coach_turns`           | attempt, encouragement, cue, next prompt, TTS audio key/status                                                   |
+| `achievement_snapshots` | first/best comparable attempt, metric delta, display copy                                                        |
 
 ---
 
 ## 8. 48-hour build order
 
-| Hours | Build | Demo proof |
-| --- | --- | --- |
-| 0–6 | Expo shell, FastAPI, Supabase, test Azure/ElevenLabs keys | One fixture audio request returns an Azure assessment. |
-| 6–16 | ClearSpeak `/r/` drill and `POST /attempts/assess` | A highlighted target word receives a real phoneme score. |
-| 16–26 | Coach prompt and ElevenLabs streaming TTS | User hears a specific correction within a short beat. |
-| 26–34 | Speech Mirror visual, retry loop, before/after card | Score visibly rises on a prepared demo retry. |
-| 34–42 | Coffee Shop Scenario Sprint and Flow Score | Voice roleplay feels responsive and adapts to Calm/Busy. |
-| 42–48 | Demo polish, seeded fallback, pitch rehearsal | A 90-second live or recorded demo tells the full story. |
+| Hours | Build                                                     | Demo proof                                               |
+| ----- | --------------------------------------------------------- | -------------------------------------------------------- |
+| 0–6   | Expo shell, FastAPI, Supabase, test Azure/ElevenLabs keys | One fixture audio request returns an Azure assessment.   |
+| 6–16  | ClearSpeak `/r/` drill and `POST /attempts/assess`        | A highlighted target word receives a real phoneme score. |
+| 16–26 | Coach prompt and ElevenLabs streaming TTS                 | User hears a specific correction within a short beat.    |
+| 26–34 | Speech Mirror visual, retry loop, before/after card       | Score visibly rises on a prepared demonpm in retry.      |
+| 34–42 | Coffee Shop Scenario Sprint and Flow Score                | Voice roleplay feels responsive and adapts to Calm/Busy. |
+| 42–48 | Demo polish, seeded fallback, pitch rehearsal             | A 90-second live or recorded demo tells the full story.  |
 
 ---
 
