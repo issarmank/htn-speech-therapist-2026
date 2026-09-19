@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
@@ -17,7 +17,6 @@ export function usePracticeRecorder() {
   const [status, setStatus] = useState<PracticeRecorderStatus>('idle');
   const stoppingRef = useRef(false);
   const startedAtRef = useRef<number | null>(null);
-  const stopRef = useRef<() => Promise<AudioClip | null>>(() => Promise.resolve(null));
 
   const requestPermission = async () => {
     const permission = await requestRecordingPermissionsAsync();
@@ -39,7 +38,7 @@ export function usePracticeRecorder() {
     }
   };
 
-  const stop = async (): Promise<AudioClip | null> => {
+  const stop = useCallback(async (): Promise<AudioClip | null> => {
     if (stoppingRef.current || !recorder.isRecording) return null;
     stoppingRef.current = true;
     setStatus('stopping');
@@ -63,15 +62,13 @@ export function usePracticeRecorder() {
       startedAtRef.current = null;
       stoppingRef.current = false;
     }
-  };
-
-  stopRef.current = stop;
+  }, [recorder]);
 
   useEffect(() => {
     if (status !== 'recording') return;
-    const timeout = setTimeout(() => { void stopRef.current(); }, MAX_RECORDING_MILLIS);
+    const timeout = setTimeout(() => { void stop(); }, MAX_RECORDING_MILLIS);
     return () => clearTimeout(timeout);
-  }, [status]);
+  }, [status, stop]);
 
   return {
     requestPermission,
