@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -15,9 +15,25 @@ export default function Profile() {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.body}>
-        <Text style={styles.title} maxFontSizeMultiplier={MAX_TITLE_SCALE}>
-          Account
-        </Text>
+        <View style={styles.header}>
+          <Text style={styles.title} maxFontSizeMultiplier={MAX_TITLE_SCALE}>
+            Account
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            hitSlop={12}
+            style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(app)');
+              }
+            }}>
+            <Text style={styles.backButtonText}>Back</Text>
+          </Pressable>
+        </View>
 
         <View style={styles.card}>
           <Row label="Signed in as" value={email ?? 'Unknown'} />
@@ -55,7 +71,28 @@ function Row({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.canvas },
   body: { ...ContentColumn, flexGrow: 1, padding: Layout.page, gap: Layout.section },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   title: { ...Type.title1, color: Colors.ink },
+  backButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.violetTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButtonPressed: {
+    opacity: 0.7,
+  },
+  backButtonText: {
+    ...Type.caption,
+    color: Colors.violetDeep,
+    fontWeight: '700',
+  },
   card: {
     borderRadius: Radius.card,
     borderWidth: 1,
