@@ -1,3 +1,10 @@
+> **OUTDATED — do not build against this.**
+> It describes an earlier product (Azure pronunciation scoring, `/api/v1/attempts/*`,
+> Supabase, ClearSpeak drills). None of it is implemented. The live API is
+> `/auth/*`, `POST /api/v1/speech/analyze`, `GET /api/v1/speech/reviews` and
+> `/health`. See `DESIGN_SPEC` for the design and
+> `src/features/api/contracts.ts` for the current response shapes.
+
 # VocalCraft AI — Frontend Specification
 
 **Repository:** `htn-speech-therapist-2026`  

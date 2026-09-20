@@ -1,15 +1,19 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { Redirect } from 'expo-router';
+import { ActivityIndicator, View } from 'react-native';
 
-export default function HomeScreen() {
-  return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.page}>
-    <View style={styles.header}><View><Text style={styles.brand}>VOCALFLOW</Text><Text style={styles.kicker}>Your voice practice studio</Text></View><Text style={styles.streak}>✦ 3 day streak</Text></View>
-    <Text style={styles.eyebrow}>TODAY’S MISSION</Text><Text style={styles.title}>Make your R sound{`\n`}land clearly.</Text><Text style={styles.subtitle}>Say one phrase, see the word to refine, get one coach cue, and hear your progress.</Text>
-    <View style={styles.card}><Text style={styles.cardLabel}>CLEARSPEAK · R SOUND</Text><Text style={styles.cardTitle}>Speech Mirror</Text><Text style={styles.cardCopy}>A focused two-attempt warm-up for “Red robin runs rapidly.”</Text></View>
-    <Pressable accessibilityRole="button" accessibilityLabel="Start today’s ClearSpeak mission" onPress={() => router.push('/mission/clear-speak-r')} style={styles.cta}><Text style={styles.ctaText}>Start today’s mission  →</Text></Pressable>
-    <Pressable accessibilityRole="button" accessibilityLabel="Start Coffee Shop Scenario Sprint" onPress={() => router.push(`/scenario/coffee-shop/${Date.now()}`)} style={styles.secondary}><Text style={styles.secondaryText}>Try Coffee Shop Scenario Sprint</Text></Pressable>
-    <Text style={styles.footer}>Demo mode is on until a backend URL is configured. Your phone still records a real utterance; sample scoring keeps the journey smooth.</Text>
-  </ScrollView>;
+import { Colors } from '@/constants/theme';
+import { useAuth } from '@/features/auth/auth-context';
+
+export default function Index() {
+  const { status } = useAuth();
+
+  if (status === 'loading') {
+    return (
+      <View style={{ flex: 1, backgroundColor: Colors.canvas, justifyContent: 'center' }}>
+        <ActivityIndicator color={Colors.violet} />
+      </View>
+    );
+  }
+
+  return <Redirect href={status === 'signedIn' ? '/(app)' : '/welcome'} />;
 }
-
-const styles = StyleSheet.create({ page: { flexGrow: 1, padding: 24, gap: 18, backgroundColor: '#F7F7F1' }, header: { flexDirection: 'row', justifyContent: 'space-between' }, brand: { color: '#172540', fontWeight: '900', letterSpacing: 2 }, kicker: { color: '#687587', marginTop: 5, fontSize: 13 }, streak: { color: '#805A00', backgroundColor: '#FFF1CB', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 18, fontSize: 12, fontWeight: '800' }, eyebrow: { color: '#246B69', fontWeight: '900', letterSpacing: 1.2, marginTop: 20 }, title: { color: '#172540', fontSize: 39, lineHeight: 45, fontWeight: '900' }, subtitle: { color: '#637183', fontSize: 16, lineHeight: 24 }, card: { gap: 9, padding: 22, borderRadius: 28, backgroundColor: '#172540' }, cardLabel: { color: '#9EE4D9', fontSize: 12, fontWeight: '900', letterSpacing: 1 }, cardTitle: { color: '#FFF', fontSize: 27, fontWeight: '900' }, cardCopy: { color: '#D4E5E3', fontSize: 16, lineHeight: 23 }, cta: { minHeight: 62, borderRadius: 21, backgroundColor: '#FF8565', alignItems: 'center', justifyContent: 'center' }, ctaText: { color: '#FFF', fontWeight: '900', fontSize: 15 }, secondary: { minHeight: 48, alignItems: 'center', justifyContent: 'center' }, secondaryText: { color: '#246B69', fontWeight: '800' }, footer: { color: '#7A8490', fontSize: 12, lineHeight: 18, marginTop: 'auto' } });
